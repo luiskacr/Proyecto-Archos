@@ -1,0 +1,137 @@
+---
+title: "pregunta6y7"
+output: 
+  html_document: 
+    fig_width: 20
+    fig_height: 15
+date: "2023-04-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("tm")
+library("wordcloud")
+library("readr")
+library("RColorBrewer")
+library("wordcloud2")
+```
+
+# 6 Desarrollar una nube de palabras que les realizaron en el Webinar y una nube de palabras con las respuestas de dichas respuestas
+
+## Nube de Palabra de las Preguntas
+
+```{r preguntas}
+#Se Extrae el archivo
+ruta.archivo <- "./preguntas.txt"
+preguntas <- readr::read_lines(ruta.archivo,locale = readr::locale(encoding = readr::guess_encoding(ruta.archivo)[1,1][[1]]))
+preguntas <- paste0(preguntas,collapse=" ")
+
+#Se Convierte a Data Frame
+text <- data.frame(doc_id = "Preguntas del Webinar", text=preguntas, stringsAsFactors = F)
+#Convertivismo el dataframe en datasource
+ds.preguntas <- DataframeSource(text)
+#Convertir el datasource en Corpus
+corpus <- Corpus(ds.preguntas)
+
+#Se limpia el texto
+corpus <-tm_map(corpus,removePunctuation) #eliminae signos de puntuacion
+corpus <-tm_map(corpus,content_transformer(tolower)) # Texto a minusculas
+corpus <-tm_map(corpus,removeNumbers) #elimina Numeros
+corpus <-tm_map(corpus,removeWords,stopwords("spanish")) # Elimina palabras vacias del idioma espanol
+corpus <-tm_map(corpus,PlainTextDocument) #transforma el texto a texto plano
+
+#Crear una matriz de terminos
+term_document_matrix <-TermDocumentMatrix(corpus)
+term_document_matrix <-as.matrix(term_document_matrix)
+head(term_document_matrix,3)
+terms.vector <-sort(rowSums(term_document_matrix),decreasing =TRUE)
+term_document_data_frame <- data.frame(word = names(terms.vector),freq=terms.vector)
+head(term_document_data_frame,3)
+
+wordcloud(words = term_document_data_frame$word, # 
+          freq = term_document_data_frame$freq,
+          scale = c(6,1),
+          min.freq = 1,
+          max.words = 300,
+          random.order = FALSE,
+          rot.per = 0.15,
+          colors = brewer.pal(8, "Dark2")
+          )
+
+```
+
+# Nube de Palabra de Respuesas
+
+```{r resspuestas}
+#Se Extrae el archivo
+ruta.archivo <- "./respuestas.txt"
+preguntas <- readr::read_lines(ruta.archivo,locale = readr::locale(encoding = readr::guess_encoding(ruta.archivo)[1,1][[1]]))
+preguntas <- paste0(preguntas,collapse=" ")
+
+#Se Convierte a Data Frame
+text <- data.frame(doc_id = "Preguntas del Webinar", text=preguntas, stringsAsFactors = F)
+#Convertivismo el dataframe en datasource
+ds.preguntas <- DataframeSource(text)
+#Convertir el datasource en Corpus
+corpus <- Corpus(ds.preguntas)
+
+#Se limpia el texto
+corpus <-tm_map(corpus,removePunctuation) #eliminae signos de puntuacion
+corpus <-tm_map(corpus,content_transformer(tolower)) # Texto a minusculas
+corpus <-tm_map(corpus,removeNumbers) #elimina Numeros
+corpus <-tm_map(corpus,removeWords,stopwords("spanish")) # Elimina palabras vacias del idioma espanol
+corpus <-tm_map(corpus,PlainTextDocument) #transforma el texto a texto plano
+
+#Crear una matriz de terminos
+term_document_matrix <-TermDocumentMatrix(corpus)
+term_document_matrix <-as.matrix(term_document_matrix)
+head(term_document_matrix,3)
+terms.vector <-sort(rowSums(term_document_matrix),decreasing =TRUE)
+term_document_data_frame <- data.frame(word = names(terms.vector),freq=terms.vector)
+head(term_document_data_frame,3)
+
+wordcloud(words = term_document_data_frame$word, # 
+          freq = term_document_data_frame$freq,
+          scale = c(6,1),
+          min.freq = 1,
+          max.words = 300,
+          random.order = FALSE,
+          rot.per = 0.15,
+          colors = brewer.pal(8, "Dark2")
+          )
+
+```
+
+# 7 Desarrolla una nube de palabras comunes entre las preguntas y respuestas del webinar
+
+```{r palabras comunes}
+#Se Extrae el archivo
+preguntas <- suppressWarnings(paste(readLines("./preguntas.txt") , collapse = " "))
+respuestas <- suppressWarnings(paste(readLines("./respuestas.txt"), collapse = " "))
+
+#Se Convierte a Data Frame
+text <- data.frame(doc_id = c("Preguntas", "Respuestas"), text=c(preguntas, respuestas), stringsAsFactors = F)
+#Convertivismo el dataframe en datasource
+ds <- DataframeSource(text)
+#Convertir el datasource en Corpus
+corpus <- Corpus(ds)
+
+#Se limpia el texto
+corpus <-tm_map(corpus,removePunctuation) #elimina signos de puntuacion
+corpus <-tm_map(corpus,content_transformer(tolower)) # Texto a minusculas
+corpus <-tm_map(corpus,removeNumbers) #elimina Numeros
+corpus <-tm_map(corpus,removeWords,stopwords("spanish")) # Elimina palabras vacias del idioma espanol
+
+
+#Crear una matriz de terminos
+term_document_matrix <-TermDocumentMatrix(corpus)
+term_document_matrix <-as.matrix(term_document_matrix)
+colnames(term_document_matrix) <-c("Preguntas", "Respuestas")
+head(term_document_matrix)
+
+commonality.cloud(term.matrix = term_document_matrix,
+                  comonality.measure = min,
+                  max.words = Inf
+                  )
+```
+
